@@ -45,8 +45,17 @@ You need at minimum `OPENAI_API_KEY` (or swap `research_model` / `final_report_m
 
 ## Run from the command line
 
+Interactive chat mode — handles clarifying questions and multi-turn conversation in one session:
+
+```bash
+python run.py --chat
+```
+
+Single-turn mode — state is persisted to `checkpoints.db` so you can reply across separate invocations:
+
 ```bash
 python run.py "What are the main approaches to LLM agent memory?"
+python run.py "your follow-up answer"
 ```
 
 ## Evals

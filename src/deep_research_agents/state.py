@@ -25,11 +25,26 @@ class ResearchComplete(BaseModel):
 
 
 class ClarifyWithUser(BaseModel):
-    """Whether the user's request needs a clarifying question before research starts."""
+    """Whether the user's request needs clarification before research starts."""
 
     need_clarification: bool
-    question: str = Field(description="Clarifying question to ask the user.")
-    verification: str = Field(description="Message confirming research will now start.")
+    clarifying_points: list[str] = Field(
+        default_factory=list,
+        description=(
+            "All distinct aspects of the request that are ambiguous or under-specified. "
+            "Each item is one short question. Leave empty if need_clarification is False."
+        ),
+    )
+    combined_question: str = Field(
+        description=(
+            "A single, natural-sounding message that weaves all clarifying_points together. "
+            "Ask everything at once so the user only has to reply once. "
+            "Leave empty if need_clarification is False."
+        ),
+    )
+    verification: str = Field(
+        description="Message confirming research will now start. Used when need_clarification is False."
+    )
 
 
 class ResearchQuestion(BaseModel):

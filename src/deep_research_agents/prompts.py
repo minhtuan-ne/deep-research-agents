@@ -7,9 +7,20 @@ clarify_with_user_instructions = """These are the messages exchanged so far from
 
 Today's date is {date}.
 
-Decide if you need to ask a clarifying question about the report's scope, or if it's already
-clear enough to start research. If the request is ambiguous in a way that would change what
-you research, ask ONE clarifying question. Otherwise proceed.
+Identify ALL aspects of the request that are ambiguous or under-specified in a way that would
+materially change what you research. Consider things like:
+- Scope (broad overview vs. deep technical dive?)
+- Angle (which sub-topic or perspective?)
+- Audience (beginner vs. expert?)
+- Time range (recent only, or historical?)
+- Format preference (comparison, narrative, bullet summary?)
+
+If there are any such ambiguities, collect them all into a single combined_question that asks
+everything at once — so the user only has to reply once. Do NOT ask one question and leave
+others for later turns.
+
+If the request is already clear enough to start research without answers, set need_clarification
+to False and leave combined_question empty.
 
 Respond in the required structured format."""
 

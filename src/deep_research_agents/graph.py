@@ -79,7 +79,7 @@ async def clarify_with_user(
     response = await model.ainvoke([HumanMessage(content=prompt)])
 
     if response.need_clarification:
-        return Command(goto=END, update={"messages": [AIMessage(content=response.question)]})
+        return Command(goto=END, update={"messages": [AIMessage(content=response.combined_question)]})
     return Command(
         goto="write_research_brief",
         update={"messages": [AIMessage(content=response.verification)]},
@@ -391,5 +391,7 @@ builder.add_edge("final_report_generation", END)
 
 from langgraph.checkpoint.memory import MemorySaver  # noqa: E402
 
-# Swap MemorySaver for SqliteSaver / AsyncPostgresSaver for cross-process persistence.
+# Default: in-process memory checkpointer.
+# Fine for LangGraph Studio, single-process tests, and subgraph callers.
+# For cross-process persistence (e.g. CLI multi-turn), use AsyncSqliteSaver in the entrypoint.
 deep_researcher = builder.compile(checkpointer=MemorySaver())

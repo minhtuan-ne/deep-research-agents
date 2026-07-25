@@ -1,0 +1,9 @@
+{
+    "dockerfile_lines": [],
+    "graphs": {
+      "Deep Researcher Agents": "./src/deep_research_agents/graph.py:deep_researcher"
+    },
+    "python_version": "3.11",
+    "env": "./.env",
+    "dependencies": ["."]
+}

@@ -49,6 +49,20 @@ You need at minimum `OPENAI_API_KEY` (or swap `research_model` / `final_report_m
 python run.py "What are the main approaches to LLM agent memory?"
 ```
 
+## Evals
+
+LLM-as-judge evals covering clarification behavior, research brief quality, and final report quality.
+
+```bash
+# Run all evals
+python evals/run_all.py
+
+# Or run individually
+python evals/eval_clarification.py   # checks ask-vs-skip clarification logic
+python evals/eval_research_brief.py  # checks brief faithfulness and specificity
+python evals/eval_report_quality.py  # checks final report quality (full research run)
+```
+
 ## Run with LangGraph Studio (visual debugger)
 
 ```bash

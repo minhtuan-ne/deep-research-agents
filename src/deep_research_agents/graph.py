@@ -389,4 +389,7 @@ builder.add_edge(START, "clarify_with_user")
 builder.add_edge("research_supervisor", "final_report_generation")
 builder.add_edge("final_report_generation", END)
 
-deep_researcher = builder.compile()
+from langgraph.checkpoint.memory import MemorySaver  # noqa: E402
+
+# Swap MemorySaver for SqliteSaver / AsyncPostgresSaver for cross-process persistence.
+deep_researcher = builder.compile(checkpointer=MemorySaver())

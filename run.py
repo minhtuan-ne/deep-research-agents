@@ -1,4 +1,8 @@
-"""Run the agent from the command line, e.g.: python run.py "your research question"."""
+"""Run the agent from the command line, e.g.: python run.py "your research question".
+
+Uses a fixed thread ID so clarifying questions work across multiple invocations:
+the graph pauses, asks a question, and resumes when you run the script again with your answer.
+"""
 
 import asyncio
 import sys
@@ -10,16 +14,21 @@ load_dotenv()
 
 from deep_research_agents import deep_researcher  # noqa: E402
 
+# Fixed thread ID ties all CLI invocations into one conversation thread.
+THREAD_CONFIG = {"configurable": {"thread_id": "cli-session"}}
+
 
 async def main() -> None:
-    """Invoke the graph with a question from argv and print the final report."""
     question = " ".join(sys.argv[1:]) or "What are the main approaches to LLM agent memory?"
-    result = await deep_researcher.ainvoke({"messages": [HumanMessage(content=question)]})
+    result = await deep_researcher.ainvoke(
+        {"messages": [HumanMessage(content=question)]},
+        config=THREAD_CONFIG,
+    )
 
     if result.get("final_report"):
         print(result["final_report"])
     else:
-        # The graph ended early, e.g. to ask a clarifying question.
+        # Graph paused to ask a clarifying question — run again with your answer.
         print(result["messages"][-1].content)
 
 

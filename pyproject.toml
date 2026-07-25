@@ -1,0 +1,24 @@
+[project]
+name = "deep-research-agents"
+version = "0.0.1"
+description = "A supervisor/researcher deep research LangGraph agent."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "langgraph>=0.5.4",
+    "langchain-openai>=0.3.28",
+    "langchain-anthropic>=0.3.15",
+    "tavily-python>=0.5.0",
+    "python-dotenv>=1.0.1",
+    "langgraph-cli[inmem]>=0.3.1",
+]
+
+[build-system]
+requires = ["setuptools>=73.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["deep_research_agents"]
+
+[tool.setuptools.package-dir]
+"deep_research_agents" = "src/deep_research_agents"

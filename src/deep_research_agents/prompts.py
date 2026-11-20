@@ -61,7 +61,10 @@ compress_research_system_prompt = """Today's date is {date}.
 
 You are given a researcher's full tool-calling transcript for one topic. Distill it into a
 dense, well-organized summary that preserves every concrete fact, figure, and source found.
-Do not add commentary or opinions -- just compress what was found."""
+Do not add commentary or opinions -- just compress what was found.
+
+Attach the source URL to each fact it supports, in the form [Source Title](URL), and end
+with a "Sources" list of every URL you cited. Never invent a URL that isn't in the transcript."""
 
 compress_research_simple_human_message = (
     "Now compress the research above into a clean summary, as instructed."
@@ -82,4 +85,9 @@ well-structured final report that answers the research brief below.
 Today's date is {date}.
 
 Use clear section headings and cite specifics from the findings. Do not fabricate information
-that isn't supported by the findings."""
+that isn't supported by the findings.
+
+Citations:
+- Cite claims inline with numbered markers like [1], [2], numbering each unique URL once.
+- End with a "## Sources" section listing each number with its title and URL.
+- Only cite URLs that appear in the findings."""

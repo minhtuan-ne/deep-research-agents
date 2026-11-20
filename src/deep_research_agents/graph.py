@@ -202,12 +202,17 @@ async def supervisor_tools(
             )
             for tc in allowed
         ]
-        results = await asyncio.gather(*tasks)
+        # return_exceptions=True: one failed researcher must not kill its siblings' work.
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for result, tc in zip(results, allowed):
+            if isinstance(result, BaseException):
+                content = f"Error: research failed for this topic: {result}"
+            else:
+                content = result.get("compressed_research", "Error: research failed.")
             tool_messages.append(
                 ToolMessage(
-                    content=result.get("compressed_research", "Error: research failed."),
+                    content=content,
                     name="ConductResearch",
                     tool_call_id=tc["id"],
                 )
@@ -333,7 +338,7 @@ async def compress_research(state: ResearcherState, config: RunnableConfig) -> d
 
 
 researcher_builder = StateGraph(
-    ResearcherState, output=ResearcherOutputState, config_schema=Configuration
+    ResearcherState, output_schema=ResearcherOutputState, config_schema=Configuration
 )
 researcher_builder.add_node("researcher", researcher)
 researcher_builder.add_node("researcher_tools", researcher_tools)
@@ -358,29 +363,37 @@ async def final_report_generation(state: AgentState, config: RunnableConfig) -> 
             "tags": ["langsmith:nostream"],
         }
     )
-    prompt = final_report_generation_prompt.format(
-        research_brief=state.get("research_brief", ""),
-        findings=findings,
-        date=get_today_str(),
-    )
-    try:
-        report = await model.ainvoke([HumanMessage(content=prompt)])
-        return {
-            "final_report": report.content,
-            "messages": [report],
-            "notes": {"type": "override", "value": []},
-        }
-    except Exception as e:  # noqa: BLE001
-        return {
-            "final_report": f"Error generating final report: {e}",
-            "notes": {"type": "override", "value": []},
-        }
+    error: Exception | None = None
+    for _ in range(3):
+        prompt = final_report_generation_prompt.format(
+            research_brief=state.get("research_brief", ""),
+            findings=findings,
+            date=get_today_str(),
+        )
+        try:
+            report = await model.ainvoke([HumanMessage(content=prompt)])
+            return {
+                "final_report": report.content,
+                "messages": [report],
+                "notes": {"type": "override", "value": []},
+            }
+        except Exception as e:  # noqa: BLE001
+            error = e
+            if not is_token_limit_exceeded(e):
+                break
+            # Over the context window: drop the tail of the findings and retry.
+            findings = findings[: int(len(findings) * 0.7)]
+
+    return {
+        "final_report": f"Error generating final report: {error}",
+        "notes": {"type": "override", "value": []},
+    }
 
 
 ###################
 # Top-level graph
 ###################
-builder = StateGraph(AgentState, input=AgentInputState, config_schema=Configuration)
+builder = StateGraph(AgentState, input_schema=AgentInputState, config_schema=Configuration)
 builder.add_node("clarify_with_user", clarify_with_user)
 builder.add_node("write_research_brief", write_research_brief)
 builder.add_node("research_supervisor", supervisor_subgraph)

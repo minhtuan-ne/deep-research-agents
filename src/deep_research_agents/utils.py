@@ -26,9 +26,13 @@ def think_tool(reflection: str) -> str:
 async def web_search(
     query: str, config: Annotated[RunnableConfig, InjectedToolArg] = None
 ) -> str:
-    """Run a Tavily search and return a compact, readable summary of results."""
+    """Run a Tavily search and return a compact, readable summary of results.
+
+    Uses the async client so parallel researchers don't block each other's
+    event loop while waiting on network I/O.
+    """
     try:
-        from tavily import TavilyClient
+        from tavily import AsyncTavilyClient
     except ImportError:
         return "Error: tavily-python is not installed. `pip install tavily-python`."
 
@@ -36,8 +40,11 @@ async def web_search(
     if not api_key:
         return "Error: TAVILY_API_KEY is not set."
 
-    client = TavilyClient(api_key=api_key)
-    response = client.search(query, max_results=5, include_raw_content=False)
+    client = AsyncTavilyClient(api_key=api_key)
+    try:
+        response = await client.search(query, max_results=5, include_raw_content=False)
+    except Exception as e:  # noqa: BLE001
+        return f"Error: search failed: {e}"
 
     lines = []
     for result in response.get("results", []):
@@ -45,10 +52,19 @@ async def web_search(
     return "\n".join(lines) if lines else "No results found."
 
 
+@tool(
+    "ResearchComplete",
+    description="Call this once you have gathered enough information on your assigned topic.",
+)
+def research_complete_tool() -> str:
+    """Signals the researcher loop to stop and move on to compression."""
+    return "Research marked complete."
+
+
 async def get_all_tools(config: RunnableConfig) -> list[BaseTool]:
-    """Assemble the tool list available to a researcher: search + think_tool."""
+    """Assemble the tool list available to a researcher: search + think_tool + ResearchComplete."""
     configurable = Configuration.from_runnable_config(config)
-    tools: list[BaseTool] = [think_tool]
+    tools: list[BaseTool] = [think_tool, research_complete_tool]
     if configurable.search_api == SearchAPI.TAVILY:
         tools.append(web_search)
     return tools
